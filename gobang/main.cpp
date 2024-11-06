@@ -587,8 +587,7 @@ int inspireSearch(coordinate *scoreBoard, int player) {
                 coordinate temp = { i, j ,0};
                 if (hasNeighbor(temp, 4)) {
                     scoreBoard[length] = temp;
-                    scoreBoard[length].score = singleScore(temp, player);
-                    scoreBoard[length].score += singleScore(temp, 3 - player);
+                    scoreBoard[length].score = singleScore(temp, player) + singleScore(temp, 3 - player);
                     length++;
                 }
             }
