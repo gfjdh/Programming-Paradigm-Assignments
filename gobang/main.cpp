@@ -7,37 +7,34 @@
 #define EMPTY 0        // 空位
 #define BLACK 1        // 黑棋
 #define WHITE 2        // 白棋
-#define INF 9223372036854775800 // 正无穷
-#define _INF -9223372036854775800 // 负无穷
-#define DEPTH 6        //搜索深度
+#define INF 2147483647 // 正无穷
+#define _INF -2147483647 // 负无穷
+#define DEPTH 5        //搜索深度
 #define START "START"  // 开始游戏
 #define PLACE "PLACE"  // 放置棋子
 #define TURN "TURN"    // 轮到我方下棋
 #define END "END"      // 游戏结束
 const int BOARD_MIDDLE_1 = (BOARD_SIZE + 1) / 2 - 1;
 const int BOARD_MIDDLE_2 = BOARD_SIZE / 2;
-struct chessType {
-    int more;    //长连   
+struct chessType {  
     int win5;    //连五
     int alive4;  //活4
     int conti4;  //冲4
-    int dead4;   //死4
     int alive3;  //活3
     int conti3;  //眠3
-    int dead3;   //死3
+    int jump3;   //跳3
     int alive2;  //活2
     int conti2;  //眠2
-    int dead2;   //死2
+    int jump2;   //跳2
     int alive1;  //活1
     int conti1;  //眠1
-    int dead1;   //死1
 };
 // 坐标结构体
 struct coordinate {
     int x = -1;
     int y = -1;
-    long long score = 0;
-    coordinate(int a = 0, int b = 0, long long s = 0) : x(a), y(b), score(s) {}
+    int score = 0;
+    coordinate(int a = 0, int b = 0, int s = 0) : x(a), y(b), score(s) {}
 };
 // 棋盘节点结构体
 struct Nude {
@@ -91,7 +88,7 @@ void place(coordinate target, int player = game.myFlag) {
 }
 // 快速排序函数
 int partition(coordinate *s, int high, int low) {
-    long long pi = s[high].score;
+    int pi = s[high].score;
     int i = low;
     for (int j = low; j <= high - 1; j++) {
         if (s[j].score >= pi) {
@@ -196,9 +193,7 @@ chessType typeAnalysis(coordinate p, int dire, int player)
     char b[8] = { 0 }; //beside
     int length = analyzeDire(p, dire, player, b); // 获取p点连子的长度和两边延伸4子的信息
     chessType temp = { 0 };
-    if (length > 5)
-        temp.more++;
-    else if (length == 5)
+    if (length >= 5)
         temp.win5++;
     else if (length == 4){
         if (b[0] == 0)
@@ -206,11 +201,8 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                 temp.alive4++;//011110
             else
                 temp.conti4++;//011112
-        else
-            if (b[4] == 0)
-                temp.conti4++;//211110
-            else
-                temp.dead4++;//211112 
+        else if (b[4] == 0)
+            temp.conti4++;//211110
     }
     else if (length == 3){
         if (b[0] == 0)
@@ -218,10 +210,8 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                 if (b[4] == 0)
                     if (b[5] == player)
                         temp.conti4 += 2;//1011101
-                    else if (b[5] == 0)
-                        temp.alive3++;//1011100
                     else
-                        temp.conti4++;//1011102
+                        temp.conti4++;//101110x
                 else
                     temp.conti4++;//101112x
             else if (b[1] == 0)
@@ -246,8 +236,6 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                     temp.conti4++;//x211101
                 else
                     temp.conti3++;//x211100
-            else
-                temp.dead3++;//x21112x
     }
     else if (length == 2) {
         if (b[0] == 0) {
@@ -263,19 +251,19 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                             if (b[6] == player)
                                 temp.conti4++;//01011011
                             else
-                                temp.alive3++;//0101101x
+                                temp.jump3++;//0101101x
                         else
                             if (b[6] == player)
                                 temp.conti4++;//21011011
                             else if (b[6] == 0)
-                                temp.alive3++;//21011010
+                                temp.jump3++;//21011010
                             else
                                 temp.conti3++;//21011012
                     else
                         if (b[2] == player)
                             temp.conti4++;//110110xx
                         else if (b[2] == 0)
-                            temp.alive3++;//010110xx
+                            temp.jump3++;//010110xx
                         else
                             temp.conti3++;//210110xx
                 else if (b[1] == 0)
@@ -283,7 +271,7 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                         if (b[6] == player)
                             temp.conti4++;//x0011011
                         else if (b[6] == 0)
-                            temp.alive3++;//x0011010
+                            temp.jump3++;//x0011010
                         else
                             temp.conti3++;//x0011012
                     else
@@ -293,13 +281,11 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                         if (b[6] == player)
                             temp.conti4++;//x2011011
                         else if (b[6] == 0)
-                            temp.alive3++;//x2011010
+                            temp.jump3++;//x2011010
                         else
                             temp.conti3++;//x2011012
                     else if (b[5] == 0)
                         temp.alive2++;//x201100x
-                    else
-                        temp.dead2++;//x201102x
             }
             else
                 if (b[1] == player)
@@ -307,17 +293,11 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                         temp.conti4++;//110112xx
                     else if (b[2] == 0)
                         temp.conti3++;//010112xx
-                    else
-                        temp.dead3++;//210112xx
                 else if (b[1] == 0)
                     if (b[2] == player)
                         temp.conti3++;//100112xx
                     else if (b[2] == 0)
                         temp.conti2++;//000112xx
-                    else
-                        temp.dead2++;//200112xx
-                else
-                    temp.dead2++;//x20112xx
         }
         else
             if (b[4] == 0) {
@@ -326,20 +306,12 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                         temp.conti4++;//xx211011
                     else if (b[6] == 0)
                         temp.conti3++;//xx211010
-                    else
-                        temp.dead3++;//xx211012
                 else if (b[5] == 0)
                     if (b[6] == player)
                         temp.conti3++;//xx211001
                     else if (b[6] == 0)
                         temp.conti2++;//xx211000
-                    else
-                        temp.dead2++;//xx211002
-                else
-                    temp.dead2++;//xx21102x
             }
-            else
-                temp.dead2++;//xx2112xx
     }
     else {
         if (b[0] == 0) {
@@ -354,15 +326,15 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                                     else
                                         temp.conti4++; // 11101011x
                                 else if (b[3] == 0)
-                                    if (b[7] == player)
-                                        temp.conti4++; // 011010111                                   
+                                    if (b[7] == player || b[7] == 0)
+                                        temp.conti4++; // 011010111/0                                   
                                     else
-                                        temp.alive3++; // 01101011x                                                                 
+                                        temp.jump3++; // 011010112                                                                 
                                 else
                                     if (b[7] == player)
                                         temp.conti4++; // 211010111                                   
                                     else if (b[7] == 0)
-                                        temp.alive3++; // 211010110                                   
+                                        temp.jump3++; // 211010110                                   
                                     else
                                         temp.conti3++; // 211010112                                   
                             }
@@ -370,7 +342,7 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                                 if (b[3] == player)
                                     temp.conti4++; // 1110101xx                              
                                 else if (b[3] == 0)
-                                    temp.alive3++; // 0110101xx                               
+                                    temp.jump3++; // 0110101xx                               
                                 else
                                     temp.conti3++; // 2110101xx                              
                         }
@@ -379,22 +351,22 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                                 if (b[7] == player)
                                     temp.conti4++; // x01010111
                                 else if (b[7] == 0)
-                                    temp.alive3++; // x01010110
+                                    temp.jump3++; // x01010110
                                 else
                                     temp.conti3++; // x01010112
                             else
-                                temp.alive2++; // x010101xx
+                                temp.jump2++; // x010101xx
                         }
                         else {
                             if (b[6] == player)
                                 if (b[7] == player)
                                     temp.conti4++; // x21010111
                                 else if (b[7] == 0)
-                                    temp.alive3++; // x21010110
+                                    temp.jump3++; // x21010110
                                 else
                                     temp.conti3++; // x21010112
                             else if (b[6] == 0)
-                                temp.alive2++; // x2101010x     
+                                temp.jump2++; // x2101010x     
                             else
                                 temp.conti3++; // x2101012x    
                         }
@@ -404,11 +376,11 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                             if (b[3] == player)
                                 temp.conti4++; // 1110102xx
                             else if (b[3] == 0)
-                                temp.alive3++; // 0110102xx                                                                 
+                                temp.jump3++; // 0110102xx                                                                 
                             else
                                 temp.conti3++; // 2110102xx
                         else if (b[2] == 0)
-                            temp.alive2++; // x010102xx
+                            temp.jump2++; // x010102xx
                         else
                             temp.conti2++; // x210102xx  
                     }
@@ -419,11 +391,11 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                             if (b[7] == player)
                                 temp.conti4++; // xxx010111                                   
                             else if (b[7] == 0)
-                                temp.alive3++; // xxx010110
+                                temp.jump3++; // xxx010110
                             else
                                 temp.conti3++; // xxx010112
                         else if (b[6] == 0)
-                            temp.alive2++; // xxx01010x
+                            temp.jump2++; // xxx01010x
                         else
                             temp.conti2++; // xxx01012x  
                     else
@@ -436,18 +408,12 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                         if (b[3] == player)
                             temp.conti4++; // 111012xxx
                         else if (b[3] == 0)
-                            temp.conti3++; // 011012xxx                                                                 
-                        else
-                            temp.dead3++; // 211012xxx                                              
+                            temp.conti3++; // 011012xxx                                                                                                          
                     else if (b[2] == 0) 
                         if (b[3] == player)
                             temp.conti3++; // 101012xxx
                         else if (b[3] == 0)
                             temp.conti2++; // 001012xxx                                                                 
-                        else
-                            temp.dead2++; // 201012xxx   
-                    else
-                        temp.dead2++; // x21012xxx 
                 }
                 else
                      temp.conti1++; // xxx012xxx 
@@ -461,17 +427,11 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                             temp.conti4++; // xxx210111                                   
                         else if (b[7] == 0)
                             temp.conti3++; // xxx210110
-                        else
-                            temp.dead4++; // xxx210112
                     else if (b[6] == 0)
                         if (b[7] == player)
                             temp.conti3++; // xxx210101                                   
                         else if (b[7] == 0)
                             temp.conti2++; // xxx210100
-                        else
-                            temp.dead2++; // xxx210102
-                    else
-                        temp.dead2++; // xxx21012x
                 }
                 else if (b[5] == 0) {
                     if (b[6] == player)
@@ -479,23 +439,13 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                             temp.conti3++; // xxx210011                                   
                         else if (b[7] == 0)
                             temp.conti2++; // xxx210010
-                        else
-                            temp.dead2++; // xxx210102
                     else if (b[6] == 0)
                         if (b[7] == player)
                             temp.conti2++; // xxx210001                                   
                         else if (b[7] == 0)
                             temp.conti1++; // xxx210000
-                        else
-                            temp.dead1++; // xxx210002
-                    else
-                        temp.dead1++; // xxx21002x
                 }
-                else
-                    temp.dead1++; // xxx2102xx
             }
-            else
-                temp.dead1++; // xxx212xxx 
         }
     }
     return temp;
@@ -506,51 +456,50 @@ int singleScore(coordinate p, int player) {
     for (int i = 1; i < 4; i++) {
         chessType temp;
         temp = typeAnalysis(p, i, player);
-        chesstype.more += temp.more;
         chesstype.win5 += temp.win5;
         chesstype.alive4 += temp.alive4;
         chesstype.conti4 += temp.conti4;
-        chesstype.dead4 += temp.dead4;
         chesstype.alive3 += temp.alive3;
         chesstype.conti3 += temp.conti3;
-        chesstype.dead3 += temp.dead3;
+        chesstype.jump3 += temp.jump3;
         chesstype.alive2 += temp.alive2;
         chesstype.conti2 += temp.conti2;
-        chesstype.dead2 += temp.dead2;
+        chesstype.jump2 += temp.jump2;
         chesstype.alive1 += temp.alive1;
         chesstype.conti1 += temp.conti1;
-        chesstype.dead1 += temp.dead1;
     }
-    int score = ((chesstype.more << 30) + (chesstype.win5 << 30) + (chesstype.alive4 << 18) + (chesstype.conti4 << 13) + (chesstype.dead4 << 8) + (chesstype.alive3 << 14) + (chesstype.conti3 << 10) + 
-                (chesstype.dead3 << 7) + (chesstype.alive2 << 10) + (chesstype.conti2 << 7)  + (chesstype.dead2 << 2) + (chesstype.alive1 << 7)  + (chesstype.conti1 << 3)  +  chesstype.dead1);
-    if ((chesstype.conti4 >= 1 && chesstype.alive3 >= 1) || chesstype.alive4 >= 1 || chesstype.conti4 >= 2)//必胜
-        score += 8388608;
+    if (chesstype.win5 || (chesstype.conti4 && chesstype.alive3) || chesstype.alive4 || chesstype.conti4 >= 2)//胜
+        return INF;
+    int score = ((chesstype.conti4 << 12) +
+                 (chesstype.alive3 << 12) + (chesstype.conti3 << 8) + (chesstype.jump3 << 10) + 
+                 (chesstype.alive2 << 8) + (chesstype.conti2 << 3)  + (chesstype.jump2 << 6) + 
+                 (chesstype.alive1 << 3)  + chesstype.conti1);
     if (chesstype.alive3 >= 2)//必胜?
-        score += 1048576;
+        score += 131072;
     return score;
 }
 //棋盘整体局面分
-long long wholeScore(int player) {
-    long long comScore = 0, humScore = 0;
+int wholeScore(int player) {
+    int Score = 0;
     for (int i = 0; i < BOARD_SIZE; i++) {
         for (int j = 0; j < BOARD_SIZE; j++) {
-            coordinate temp = { i,j,0 };
-            if (game.MAP.board[i][j] == player)//己方落子的单点分相加
-                comScore += singleScore(temp, player);
-            else if (game.MAP.board[i][j] == 3 - player)//对方落子的单点分相加
-                humScore += singleScore(temp, 3 - player);
+            coordinate temp = { i,j,game.MAP.board[i][j] };
+            if (temp.score == 0) continue;
+            if (temp.score == player)
+                Score += singleScore(temp, player); //己方落子的单点分相加
+            else 
+                Score -= singleScore(temp, 3 - player); //对方落子的单点分相加
         }
     }
-    return comScore - humScore;//己方总分减对方总分 得到当前对己方来说的局势分
+    return Score;//己方总分减对方总分 得到当前对己方来说的局势分
 }
 //响应上一次的操作
 int respondMove(coordinate *scoreBoard, coordinate command, int player) {
-    int length = 1;
     // 分析落子点周围的棋型
     for (int i = 0; i < 4; i++) {
         chessType temp = typeAnalysis(command, i, player);
         // 如果出现活三或四，进行相应的处理
-        if (temp.conti4 >= 1 || temp.alive4 >= 1) {
+        if (temp.conti4 || temp.alive4) {
             for (int j = -4; j <= 4; j++) {
                 coordinate target = Neighbor(command, i, j);
                 if (getColor(target)) continue;
@@ -564,13 +513,16 @@ int respondMove(coordinate *scoreBoard, coordinate command, int player) {
             }
             return -1;
         }
-        if (temp.alive3 >= 1) {
+        if (temp.alive3 || temp.jump3) {
+            int length = 0;
             for (int j = -3; j <= 3; j++) {
                 coordinate target = Neighbor(command, i, j);
                 if (getColor(target)) continue;
                 place(target, player);
-                if (analyzeDire(command, i, player) == 4)
-                    scoreBoard[length - 1] = target;
+                if (analyzeDire(command, i, player) == 4) {
+                    scoreBoard[length] = target;
+                    length++;
+                }
                 place(target, 0);
             }
             return length;
@@ -579,7 +531,7 @@ int respondMove(coordinate *scoreBoard, coordinate command, int player) {
     return 0;
 }
 // 启发性搜索
-int inspireSearch(coordinate *scoreBoard, int player) {
+int inspireSearch(coordinate *scoreBoard, int player)  {
     int length = 0;
     for (int i = 0; i < BOARD_SIZE; i++) {
         for (int j = 0; j < BOARD_SIZE; j++) {
@@ -594,20 +546,29 @@ int inspireSearch(coordinate *scoreBoard, int player) {
         }
     }
     quickSort(scoreBoard, length - 1);
-    return length > 8 ? 8 : length;
+    return length > 10 ? 10 : length;
 }
 //负极大极小值搜索
-coordinate alphaBeta(int depth, long long alpha, long long beta, int player, coordinate p) {
+coordinate alphaBeta(int depth, int alpha, int beta, int player, coordinate command, coordinate current) {
+    coordinate temp = command;
     if (depth == 0) {
-        p.score = wholeScore(player);
-        return p;
+        temp.score = wholeScore(player);
+        return temp;
     }
-    coordinate temp = p;
     coordinate steps[BOARD_SIZE * BOARD_SIZE];
-    int length = inspireSearch(steps, player);
+    int length = 1;
+    int myRespons = respondMove(steps, current, player);
+    int enemyRespons = respondMove(steps, command, 3 - player);
+    if (myRespons >= 0 && enemyRespons == 0)
+        length = inspireSearch(steps, player);//搜索可落子点
+    else {
+        depth++;
+        if (myRespons == 0 && enemyRespons > 0)
+            length = enemyRespons;
+    }
     for (int i = 0; i < length; i++) {
         place(steps[i], player);//模拟落子
-        temp = alphaBeta(depth - 1, -beta, -alpha, 3 - player, steps[i]);//取负值并交换alpha和beta
+        temp = alphaBeta(depth - 1, -beta, -alpha, 3 - player, steps[i], command);//取负值并交换alpha和beta
         temp.score *= -1;
         place(steps[i], 0);//还原落子
         if (temp.score >= beta) {
@@ -621,7 +582,7 @@ coordinate alphaBeta(int depth, long long alpha, long long beta, int player, coo
     return temp;
 }
 //搜索入口
-coordinate entrance(int depth, long long alpha, long long beta, int player, coordinate command, coordinate current) {
+coordinate entrance(int depth, int alpha, int beta, int player, coordinate command, coordinate current) {
     coordinate steps[BOARD_SIZE * BOARD_SIZE]{};
     coordinate temp;
     coordinate best;
@@ -636,7 +597,7 @@ coordinate entrance(int depth, long long alpha, long long beta, int player, coor
         length = inspireSearch(steps, player);//搜索可落子点
     for (int i = 0; i < length; i++) {
         place(steps[i], player);//模拟落子
-        temp = alphaBeta(depth - 1, -beta, -alpha, 3 - player, steps[i]);//递归
+        temp = alphaBeta(depth - 1, -beta, -alpha, 3 - player, steps[i], command);//递归
         temp.score *= -1;
         place(steps[i], 0);//还原落子
         if (temp.score > alpha) {
