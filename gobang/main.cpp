@@ -9,7 +9,7 @@
 #define WHITE 2        // 白棋
 #define INF 2147483647 // 正无穷
 #define _INF -2147483647 // 负无穷
-#define DEPTH 5        //搜索深度
+#define DEPTH 6        //搜索深度
 #define START "START"  // 开始游戏
 #define PLACE "PLACE"  // 放置棋子
 #define TURN "TURN"    // 轮到我方下棋
@@ -55,8 +55,10 @@ class Game {
 public:
     int myFlag;
     int enemyFlag;
+    int count;
+    bool draw;
     Nude MAP;
-    Game() : myFlag(0), enemyFlag(0){}
+    Game() : myFlag(0), enemyFlag(0), count(0), draw(0){}
 
     void loop();
     void auto_test();
@@ -217,8 +219,10 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                 else
                     if (b[5] == player)
                         temp.conti4++;//x011101
-                    else
+                    else if (b[5] == 0 || b[1] == 0)
                         temp.alive3++;//x01110x
+                    else
+                        temp.conti3++;//2011102
             }
             else
                 if (b[1] == player)
@@ -518,43 +522,6 @@ int wholeScore(int player) {
     }
     return Score;//己方总分减对方总分 得到当前对己方来说的局势分
 }
-//响应上一次的操作
-int respondMove(coordinate *scoreBoard, coordinate command, int player) {
-    // 分析落子点周围的棋型
-    for (int i = 0; i < 4; i++) {
-        chessType temp = typeAnalysis(command, i, player);
-        // 如果出现活三或四，进行相应的处理
-        if (temp.conti4 || temp.alive4) {
-            for (int j = -4; j <= 4; j++) {
-                coordinate target = Neighbor(command, i, j);
-                if (getColor(target)) continue;
-                place(target, player);
-                if (analyzeDire(command, i, player) >= 5){
-                    scoreBoard[0] = target;
-                    place(target, 0);
-                    break;
-                }
-                place(target, 0);
-            }
-            return -1;
-        }
-        if (temp.alive3 || temp.jump3) {
-            int length = 0;
-            for (int j = -3; j <= 3; j++) {
-                coordinate target = Neighbor(command, i, j);
-                if (getColor(target)) continue;
-                place(target, player);
-                if (analyzeDire(command, i, player) == 4) {
-                    scoreBoard[length] = target;
-                    length++;
-                }
-                place(target, 0);
-            }
-            return length;
-        }
-    }
-    return 0;
-}
 // 启发性搜索
 int inspireSearch(coordinate *scoreBoard, int player) {
     int length = 0;
@@ -574,19 +541,20 @@ int inspireSearch(coordinate *scoreBoard, int player) {
     quickSort(scoreBoard, length - 1);
     // 找到最高分数
     int maxScore = scoreBoard[0].score;
-    int threshold = maxScore / 5;
+    if (maxScore < 10) game.draw = 1;
+    int threshold = maxScore / 3;
     // 找到分界线
-    int boundary = 0;
+    int boundary = 1;
     for (int i = 1; i < length; i++) {
-        if (scoreBoard[i].score < threshold) {
+        if (scoreBoard[i].score <= threshold) {
             boundary = i; // 更新分界线位置
             break; // 分数低于阈值，跳出循环
         }
     }
     // 更新 length 为分界线的位置
     length = boundary;
-    // 返回 length，最多不超过 10
-    return length > 10 ? 10 : length;
+    // 返回 length，最多不超过
+    return length > 8 ? 8 : length;
 }
 //负极大极小值搜索
 coordinate alphaBeta(int depth, int alpha, int beta, int player, coordinate command, coordinate current) {
@@ -596,24 +564,15 @@ coordinate alphaBeta(int depth, int alpha, int beta, int player, coordinate comm
         return temp;
     }
     coordinate steps[BOARD_SIZE * BOARD_SIZE];
-    int length = 1;
-    int enemyRespons = respondMove(steps, command, 3 - player);
-    int myRespons = respondMove(steps, current, player);
-    if (myRespons >= 0 && enemyRespons == -1)
-        respondMove(steps, command, 3 - player);
-    else if (myRespons > 0)
-        length = myRespons;
-    else if (enemyRespons > 0) {
-        respondMove(steps, command, 3 - player);
-        length = enemyRespons;
-    }
-    else
-        length = inspireSearch(steps, player), depth--;//搜索可落子点
+    int length = inspireSearch(steps, player);//搜索可落子点
+    if (length > 2)
+        depth--;
     for (int i = 0; i < length; i++) {
         place(steps[i], player);//模拟落子
         temp = alphaBeta(depth, -beta, -alpha, 3 - player, steps[i], command);//取负值并交换alpha和beta
         temp.score *= -1;
         place(steps[i], 0);//还原落子
+        if (game.count++ > 10000) break;
         if (temp.score >= beta) {
             temp.score = beta;
             return temp;//剪枝
@@ -630,18 +589,9 @@ coordinate entrance(int depth, int alpha, int beta, int player, coordinate comma
     coordinate temp;
     coordinate best;
     int length;
-    int myRespons = respondMove(steps, current, player);
-    if (myRespons == -1) return steps[0];
-    int enemyRespons = respondMove(steps, command, 3 - player);
-    if (enemyRespons == -1) return steps[0];
-    if (myRespons > 0) {
-        respondMove(steps, current, player);
-        return steps[0];
-    }
-    if (enemyRespons > 0)
-        length = enemyRespons;
-    else
-        length = inspireSearch(steps, player);//搜索可落子点
+    game.count = 0;
+    length = inspireSearch(steps, player);//搜索可落子点
+    if (length == 1 || game.draw) return steps[0];
     for (int i = 0; i < length; i++) {
         place(steps[i], player);//模拟落子
         temp = alphaBeta(depth - 1, -beta, -alpha, 3 - player, steps[i], command);//递归
@@ -688,7 +638,6 @@ void Game::loop() {
         }
     }
 }
-
 // 清屏函数
 void clearScreen() {
 #ifdef _WIN32
@@ -790,7 +739,7 @@ void Game::test() {
 }
 // 主函数
 int main() {
-    if (0) game.auto_test();
+    if (1) game.auto_test();
     if (1) game.test();
     game.loop(); // 进入主循环
     return 0;
