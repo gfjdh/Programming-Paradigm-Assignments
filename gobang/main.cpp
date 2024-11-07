@@ -59,6 +59,7 @@ public:
     Game() : myFlag(0), enemyFlag(0){}
 
     void loop();
+    void auto_test();
     void test();
 };
 Game game;
@@ -204,32 +205,27 @@ chessType typeAnalysis(coordinate p, int dire, int player)
         else if (b[4] == 0)
             temp.conti4++;//211110
     }
-    else if (length == 3){
-        if (b[0] == 0)
-            if (b[1] == player)
-                if (b[4] == 0)
+    else if (length == 3) {
+        if (b[0] == 0){
+            if (b[4] == 0) {
+                if (b[1] == player) {
                     if (b[5] == player)
                         temp.conti4 += 2;//1011101
-                    else
+                    else if (b[5] == player)
                         temp.conti4++;//101110x
+                }
                 else
-                    temp.conti4++;//101112x
-            else if (b[1] == 0)
-                if (b[4] == 0)
                     if (b[5] == player)
-                        temp.conti4++;//0011101
+                        temp.conti4++;//x011101
                     else
-                        temp.alive3++;//0011102
-                else
-                    temp.conti3++;//001112x
+                        temp.alive3++;//x01110x
+            }
             else
-                if (b[4] == 0)
-                    if (b[5] == player)
-                        temp.conti4++;//0011101
-                    else
-                        temp.alive3++;//0011102
-                else
+                if (b[1] == player)
+                    temp.conti4++;//101112x
+                else if (b[1] == 0)
                     temp.conti3++;//001112x
+        }
         else
             if (b[4] == 0)
                 if (b[5] == player)
@@ -240,77 +236,92 @@ chessType typeAnalysis(coordinate p, int dire, int player)
     else if (length == 2) {
         if (b[0] == 0) {
             if (b[4] == 0) {
-                if (b[1] == player)
-                    if (b[5] == player)
-                        if (b[2] == player)
+                if (b[1] == player) {
+                    if (b[5] == player) {
+                        if (b[2] == player) {
                             if (b[6] == player)
                                 temp.conti4 += 2;//11011011
                             else
                                 temp.conti4++;//1101101x
-                        else if (b[2] == 0)
+                        }
+                        else if (b[2] == 0) {
                             if (b[6] == player)
                                 temp.conti4++;//01011011
                             else
                                 temp.jump3++;//0101101x
-                        else
+                        }
+                        else {
                             if (b[6] == player)
                                 temp.conti4++;//21011011
                             else if (b[6] == 0)
                                 temp.jump3++;//21011010
                             else
                                 temp.conti3++;//21011012
-                    else
+                        }
+                    }
+                    else {
                         if (b[2] == player)
                             temp.conti4++;//110110xx
                         else if (b[2] == 0)
                             temp.jump3++;//010110xx
                         else
                             temp.conti3++;//210110xx
-                else if (b[1] == 0)
-                    if (b[5] == player)
+                    }
+                }
+                else if (b[1] == 0) {
+                    if (b[5] == player) {
                         if (b[6] == player)
                             temp.conti4++;//x0011011
                         else if (b[6] == 0)
                             temp.jump3++;//x0011010
                         else
                             temp.conti3++;//x0011012
+                    }
                     else
                         temp.alive2++;//x00110xx
-                else
-                    if (b[5] == player)
+                }
+                else {
+                    if (b[5] == player) {
                         if (b[6] == player)
                             temp.conti4++;//x2011011
                         else if (b[6] == 0)
                             temp.jump3++;//x2011010
                         else
                             temp.conti3++;//x2011012
+                    }
                     else if (b[5] == 0)
                         temp.alive2++;//x201100x
+                }
             }
-            else
-                if (b[1] == player)
+            else {
+                if (b[1] == player) {
                     if (b[2] == player)
                         temp.conti4++;//110112xx
                     else if (b[2] == 0)
                         temp.conti3++;//010112xx
-                else if (b[1] == 0)
+                }
+                else if (b[1] == 0) {
                     if (b[2] == player)
                         temp.conti3++;//100112xx
                     else if (b[2] == 0)
                         temp.conti2++;//000112xx
+                }
+            }
         }
         else
             if (b[4] == 0) {
-                if (b[5] == player)
+                if (b[5] == player) {
                     if (b[6] == player)
                         temp.conti4++;//xx211011
                     else if (b[6] == 0)
                         temp.conti3++;//xx211010
-                else if (b[5] == 0)
+                }
+                else if (b[5] == 0) {
                     if (b[6] == player)
                         temp.conti3++;//xx211001
                     else if (b[6] == 0)
                         temp.conti2++;//xx211000
+                }
             }
     }
     else {
@@ -320,51 +331,57 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                     if (b[5] == player) {
                         if (b[2] == player) {
                             if (b[6] == player) {
-                                if (b[3] == player)
+                                if (b[3] == player) {
                                     if (b[7] == player)
                                         temp.conti4 += 2; // 111010111                                   
                                     else
                                         temp.conti4++; // 11101011x
-                                else if (b[3] == 0)
+                                }
+                                else if (b[3] == 0) {
                                     if (b[7] == player || b[7] == 0)
                                         temp.conti4++; // 011010111/0                                   
                                     else
-                                        temp.jump3++; // 011010112                                                                 
-                                else
+                                        temp.jump3++; // 011010112  
+                                }
+                                else {
                                     if (b[7] == player)
                                         temp.conti4++; // 211010111                                   
                                     else if (b[7] == 0)
                                         temp.jump3++; // 211010110                                   
                                     else
-                                        temp.conti3++; // 211010112                                   
+                                        temp.conti3++; // 211010112   
+                                }
                             }
-                            else
+                            else {
                                 if (b[3] == player)
                                     temp.conti4++; // 1110101xx                              
                                 else if (b[3] == 0)
                                     temp.jump3++; // 0110101xx                               
                                 else
-                                    temp.conti3++; // 2110101xx                              
+                                    temp.conti3++; // 2110101xx      
+                            }
                         }
                         else if (b[2] == 0) {
-                            if (b[6] == player)
+                            if (b[6] == player) {
                                 if (b[7] == player)
                                     temp.conti4++; // x01010111
                                 else if (b[7] == 0)
                                     temp.jump3++; // x01010110
                                 else
                                     temp.conti3++; // x01010112
+                            }
                             else
                                 temp.jump2++; // x010101xx
                         }
                         else {
-                            if (b[6] == player)
+                            if (b[6] == player) {
                                 if (b[7] == player)
                                     temp.conti4++; // x21010111
                                 else if (b[7] == 0)
                                     temp.jump3++; // x21010110
                                 else
                                     temp.conti3++; // x21010112
+                            }
                             else if (b[6] == 0)
                                 temp.jump2++; // x2101010x     
                             else
@@ -372,13 +389,14 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                         }
                     }
                     else {
-                        if (b[2] == player)
+                        if (b[2] == player) {
                             if (b[3] == player)
                                 temp.conti4++; // 1110102xx
                             else if (b[3] == 0)
                                 temp.jump3++; // 0110102xx                                                                 
                             else
                                 temp.conti3++; // 2110102xx
+                        }
                         else if (b[2] == 0)
                             temp.jump2++; // x010102xx
                         else
@@ -387,13 +405,14 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                 }
                 else {
                     if (b[5] == player)
-                        if (b[6] == player)
+                        if (b[6] == player) {
                             if (b[7] == player)
                                 temp.conti4++; // xxx010111                                   
                             else if (b[7] == 0)
                                 temp.jump3++; // xxx010110
                             else
                                 temp.conti3++; // xxx010112
+                        }
                         else if (b[6] == 0)
                             temp.jump2++; // xxx01010x
                         else
@@ -404,16 +423,18 @@ chessType typeAnalysis(coordinate p, int dire, int player)
             }
             else {
                 if (b[1] == player) {
-                    if (b[2] == player)
+                    if (b[2] == player) {
                         if (b[3] == player)
                             temp.conti4++; // 111012xxx
                         else if (b[3] == 0)
-                            temp.conti3++; // 011012xxx                                                                                                          
-                    else if (b[2] == 0) 
+                            temp.conti3++; // 011012xxx     
+                    }
+                    else if (b[2] == 0) {
                         if (b[3] == player)
                             temp.conti3++; // 101012xxx
                         else if (b[3] == 0)
-                            temp.conti2++; // 001012xxx                                                                 
+                            temp.conti2++; // 001012xxx
+                    }
                 }
                 else
                      temp.conti1++; // xxx012xxx 
@@ -422,28 +443,32 @@ chessType typeAnalysis(coordinate p, int dire, int player)
         else {
             if (b[4] == 0) {
                 if (b[5] == player) {
-                    if (b[6] == player)
+                    if (b[6] == player) {
                         if (b[7] == player)
                             temp.conti4++; // xxx210111                                   
                         else if (b[7] == 0)
                             temp.conti3++; // xxx210110
-                    else if (b[6] == 0)
+                    }
+                    else if (b[6] == 0) {
                         if (b[7] == player)
                             temp.conti3++; // xxx210101                                   
                         else if (b[7] == 0)
                             temp.conti2++; // xxx210100
+                    }
                 }
                 else if (b[5] == 0) {
-                    if (b[6] == player)
+                    if (b[6] == player) {
                         if (b[7] == player)
                             temp.conti3++; // xxx210011                                   
                         else if (b[7] == 0)
                             temp.conti2++; // xxx210010
-                    else if (b[6] == 0)
+                    }
+                    else if (b[6] == 0) {
                         if (b[7] == player)
                             temp.conti2++; // xxx210001                                   
                         else if (b[7] == 0)
                             temp.conti1++; // xxx210000
+                    }
                 }
             }
         }
@@ -469,13 +494,13 @@ int singleScore(coordinate p, int player) {
         chesstype.conti1 += temp.conti1;
     }
     if (chesstype.win5 || (chesstype.conti4 && chesstype.alive3) || chesstype.alive4 || chesstype.conti4 >= 2)//胜
-        return INF;
+        return 1048576;
     int score = ((chesstype.conti4 << 12) +
                  (chesstype.alive3 << 12) + (chesstype.conti3 << 8) + (chesstype.jump3 << 10) + 
                  (chesstype.alive2 << 8) + (chesstype.conti2 << 3)  + (chesstype.jump2 << 6) + 
                  (chesstype.alive1 << 3)  + chesstype.conti1);
     if (chesstype.alive3 >= 2)//必胜?
-        score += 131072;
+        score += 65536;
     return score;
 }
 //棋盘整体局面分
@@ -531,13 +556,13 @@ int respondMove(coordinate *scoreBoard, coordinate command, int player) {
     return 0;
 }
 // 启发性搜索
-int inspireSearch(coordinate *scoreBoard, int player)  {
+int inspireSearch(coordinate *scoreBoard, int player) {
     int length = 0;
     for (int i = 0; i < BOARD_SIZE; i++) {
         for (int j = 0; j < BOARD_SIZE; j++) {
             if (game.MAP.board[i][j] == 0) {
-                coordinate temp = { i, j ,0};
-                if (hasNeighbor(temp, 4)) {
+                coordinate temp = { i, j ,0 };
+                if (hasNeighbor(temp, 2)) {
                     scoreBoard[length] = temp;
                     scoreBoard[length].score = singleScore(temp, player) + singleScore(temp, 3 - player);
                     length++;
@@ -545,7 +570,22 @@ int inspireSearch(coordinate *scoreBoard, int player)  {
             }
         }
     }
+    // 对 scoreBoard 进行排序
     quickSort(scoreBoard, length - 1);
+    // 找到最高分数
+    int maxScore = scoreBoard[0].score;
+    int threshold = maxScore / 5;
+    // 找到分界线
+    int boundary = 0;
+    for (int i = 1; i < length; i++) {
+        if (scoreBoard[i].score < threshold) {
+            boundary = i; // 更新分界线位置
+            break; // 分数低于阈值，跳出循环
+        }
+    }
+    // 更新 length 为分界线的位置
+    length = boundary;
+    // 返回 length，最多不超过 10
     return length > 10 ? 10 : length;
 }
 //负极大极小值搜索
@@ -557,18 +597,21 @@ coordinate alphaBeta(int depth, int alpha, int beta, int player, coordinate comm
     }
     coordinate steps[BOARD_SIZE * BOARD_SIZE];
     int length = 1;
-    int myRespons = respondMove(steps, current, player);
     int enemyRespons = respondMove(steps, command, 3 - player);
-    if (myRespons >= 0 && enemyRespons == 0)
-        length = inspireSearch(steps, player);//搜索可落子点
-    else {
-        depth++;
-        if (myRespons == 0 && enemyRespons > 0)
-            length = enemyRespons;
+    int myRespons = respondMove(steps, current, player);
+    if (myRespons >= 0 && enemyRespons == -1)
+        respondMove(steps, command, 3 - player);
+    else if (myRespons > 0)
+        length = myRespons;
+    else if (enemyRespons > 0) {
+        respondMove(steps, command, 3 - player);
+        length = enemyRespons;
     }
+    else
+        length = inspireSearch(steps, player), depth--;//搜索可落子点
     for (int i = 0; i < length; i++) {
         place(steps[i], player);//模拟落子
-        temp = alphaBeta(depth - 1, -beta, -alpha, 3 - player, steps[i], command);//取负值并交换alpha和beta
+        temp = alphaBeta(depth, -beta, -alpha, 3 - player, steps[i], command);//取负值并交换alpha和beta
         temp.score *= -1;
         place(steps[i], 0);//还原落子
         if (temp.score >= beta) {
@@ -591,7 +634,11 @@ coordinate entrance(int depth, int alpha, int beta, int player, coordinate comma
     if (myRespons == -1) return steps[0];
     int enemyRespons = respondMove(steps, command, 3 - player);
     if (enemyRespons == -1) return steps[0];
-    if (myRespons == 0 && enemyRespons > 0)
+    if (myRespons > 0) {
+        respondMove(steps, current, player);
+        return steps[0];
+    }
+    if (enemyRespons > 0)
         length = enemyRespons;
     else
         length = inspireSearch(steps, player);//搜索可落子点
@@ -641,6 +688,7 @@ void Game::loop() {
         }
     }
 }
+
 // 清屏函数
 void clearScreen() {
 #ifdef _WIN32
@@ -650,25 +698,61 @@ void clearScreen() {
 #endif
 }
 // 打印棋盘
+// ANSI color codes
+#define ANSI_COLOR_RESET   "\x1b[0m"
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
 void printBoard(coordinate current) {
     printf("   0 1 2 3 4 5 6 7 8 9 1011\n");
     for (int i = 0; i < BOARD_SIZE; i++) {
         printf("%-3d", i);
         for (int j = 0; j < BOARD_SIZE; j++) {
             if (game.MAP.board[i][j] == 0) {
-                printf(". ");
+                printf("+ ");
             }
             else if (game.MAP.board[i][j] == 1) {
-                printf("X ");
+                printf(ANSI_COLOR_RED "X " ANSI_COLOR_RESET);
             }
             else if (game.MAP.board[i][j] == 2) {
-                printf("O ");
+                printf(ANSI_COLOR_GREEN "O " ANSI_COLOR_RESET);
+            }
+            if (i == current.y && j == current.x) {
+                printf(ANSI_COLOR_RESET); // Reset color after highlighting
             }
         }
         printf("%3d\n", i);
     }
     printf("   0 1 2 3 4 5 6 7 8 9 1011\n");
-    printf("%d %d\n", current.x, current.y);
+    printf("当前位置: %d %d\n" , current.x, current.y);
+    printf("先输入纵坐标再输入横坐标：\n");
+}
+// 测试函数
+void Game::auto_test() {
+    coordinate command;
+    coordinate current; // 当前棋子位置
+    myFlag = 1;
+    enemyFlag = 2;
+    current.x = 4;
+    current.y = 4;
+    command = { BOARD_MIDDLE_1 ,BOARD_MIDDLE_1 ,0 };
+    place(current);
+    while (1) {
+        clearScreen();
+        printBoard(current);
+        fflush(stdout);
+        myFlag = 2;
+        enemyFlag = 1;
+        command = entrance(DEPTH, _INF, INF, myFlag, current, command);
+        place(command);
+        clearScreen();
+        printBoard(command);
+        fflush(stdout);
+        myFlag = 1;
+        enemyFlag = 2;
+        current = entrance(DEPTH, _INF, INF, myFlag, command, current);
+        place(current);
+    }
 }
 // 测试函数
 void Game::test() {
@@ -689,8 +773,8 @@ void Game::test() {
     myFlag = 3 - enemyFlag;
     printf("OK\n");
     fflush(stdout);
-    if (myFlag == 1){
-        current = entrance(DEPTH, _INF, INF, myFlag, command, current);   
+    if (myFlag == 1) {
+        current = entrance(DEPTH, _INF, INF, myFlag, command, current);
         fflush(stdout);
         place(current);
     }
@@ -704,9 +788,9 @@ void Game::test() {
         place(current);
     }
 }
-
 // 主函数
 int main() {
+    if (0) game.auto_test();
     if (1) game.test();
     game.loop(); // 进入主循环
     return 0;
