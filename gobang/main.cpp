@@ -9,7 +9,7 @@
 #define WHITE 2        // 白棋
 #define INF 2147483647 // 正无穷
 #define _INF -2147483647 // 负无穷
-#define DEPTH 6        //搜索深度
+#define DEPTH 5        //搜索深度
 #define START "START"  // 开始游戏
 #define PLACE "PLACE"  // 放置棋子
 #define TURN "TURN"    // 轮到我方下棋
@@ -55,10 +55,9 @@ class Game {
 public:
     int myFlag;
     int enemyFlag;
-    int count;
     bool draw;
     Nude MAP;
-    Game() : myFlag(0), enemyFlag(0), count(0), draw(0){}
+    Game() : myFlag(0), enemyFlag(0), draw(0){}
 
     void loop();
     void auto_test();
@@ -171,25 +170,6 @@ int analyzeDire(coordinate temp, int dire, int player, char *beside) {
     }
     return length;
 }
-int analyzeDire(coordinate temp, int dire, int player) {
-    int length = 1;
-    int i;
-    for (i = -1; ; i--) {
-        coordinate neighbor = Neighbor(temp, dire, i);
-        if (judgeInRange(neighbor) && player == game.MAP.board[neighbor.x][neighbor.y])
-            length++;
-        else
-            break;
-    }
-    for (i = 1; ; i++) {
-        coordinate neighbor = Neighbor(temp, dire, i);
-        if (judgeInRange(neighbor) && player == game.MAP.board[neighbor.x][neighbor.y])
-            length++;
-        else
-            break;
-    }
-    return length;
-}
 //根据连子数目和边缘信息判断棋型
 chessType typeAnalysis(coordinate p, int dire, int player)
 {
@@ -231,11 +211,12 @@ chessType typeAnalysis(coordinate p, int dire, int player)
                     temp.conti3++;//001112x
         }
         else
-            if (b[4] == 0)
+            if (b[4] == 0) {
                 if (b[5] == player)
                     temp.conti4++;//x211101
                 else
                     temp.conti3++;//x211100
+            }
     }
     else if (length == 2) {
         if (b[0] == 0) {
@@ -514,8 +495,10 @@ int wholeScore(int player) {
         for (int j = 0; j < BOARD_SIZE; j++) {
             coordinate temp = { i,j,game.MAP.board[i][j] };
             if (temp.score == 0) continue;
-            if (temp.score == player)
-                Score += singleScore(temp, player); //己方落子的单点分相加
+            if (temp.score == player) {
+                if (player == BLACK)
+                    Score += singleScore(temp, player); //己方落子的单点分相加
+            }
             else 
                 Score -= singleScore(temp, 3 - player); //对方落子的单点分相加
         }
@@ -531,7 +514,9 @@ int inspireSearch(coordinate *scoreBoard, int player) {
                 coordinate temp = { i, j ,0 };
                 if (hasNeighbor(temp, 2)) {
                     scoreBoard[length] = temp;
-                    scoreBoard[length].score = singleScore(temp, player) + singleScore(temp, 3 - player);
+                    scoreBoard[length].score = singleScore(temp, 3 - player);
+                    if (player == BLACK)
+                        scoreBoard[length].score += singleScore(temp, player);
                     length++;
                 }
             }
@@ -541,7 +526,7 @@ int inspireSearch(coordinate *scoreBoard, int player) {
     quickSort(scoreBoard, length - 1);
     // 找到最高分数
     int maxScore = scoreBoard[0].score;
-    if (maxScore < 10) game.draw = 1;
+    if (maxScore < 5) game.draw = 1;
     int threshold = maxScore / 3;
     // 找到分界线
     int boundary = 1;
@@ -562,9 +547,11 @@ coordinate alphaBeta(int depth, int alpha, int beta, int player, coordinate comm
     if (depth == 0) {
         temp.score = wholeScore(player);
         return temp;
-    }
+    } 
     coordinate steps[BOARD_SIZE * BOARD_SIZE];
     int length = inspireSearch(steps, player);//搜索可落子点
+    if (length > 5 && depth > 1)
+        depth--;
     if (length > 2)
         depth--;
     for (int i = 0; i < length; i++) {
@@ -572,7 +559,6 @@ coordinate alphaBeta(int depth, int alpha, int beta, int player, coordinate comm
         temp = alphaBeta(depth, -beta, -alpha, 3 - player, steps[i], command);//取负值并交换alpha和beta
         temp.score *= -1;
         place(steps[i], 0);//还原落子
-        if (game.count++ > 10000) break;
         if (temp.score >= beta) {
             temp.score = beta;
             return temp;//剪枝
@@ -589,12 +575,11 @@ coordinate entrance(int depth, int alpha, int beta, int player, coordinate comma
     coordinate temp;
     coordinate best;
     int length;
-    game.count = 0;
     length = inspireSearch(steps, player);//搜索可落子点
     if (length == 1 || game.draw) return steps[0];
     for (int i = 0; i < length; i++) {
         place(steps[i], player);//模拟落子
-        temp = alphaBeta(depth - 1, -beta, -alpha, 3 - player, steps[i], command);//递归
+        temp = alphaBeta(depth, -beta, -alpha, 3 - player, steps[i], command);//递归
         temp.score *= -1;
         place(steps[i], 0);//还原落子
         if (temp.score > alpha) {
@@ -638,6 +623,9 @@ void Game::loop() {
         }
     }
 }
+
+#define DEBUG 0
+#ifdef DEBUG
 // 清屏函数
 void clearScreen() {
 #ifdef _WIN32
@@ -652,7 +640,7 @@ void clearScreen() {
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
-void printBoard(coordinate current) {
+void printBoard(coordinate current, double time) {
     printf("   0 1 2 3 4 5 6 7 8 9 1011\n");
     for (int i = 0; i < BOARD_SIZE; i++) {
         printf("%-3d", i);
@@ -674,12 +662,15 @@ void printBoard(coordinate current) {
     }
     printf("   0 1 2 3 4 5 6 7 8 9 1011\n");
     printf("当前位置: %d %d\n" , current.x, current.y);
+    printf("用时: %.3f 秒\n", time); // 输出用时
     printf("先输入纵坐标再输入横坐标：\n");
 }
+#include <chrono> // 添加计时模块所需的头文件
 // 测试函数
 void Game::auto_test() {
     coordinate command;
     coordinate current; // 当前棋子位置
+    double time = 0;
     myFlag = 1;
     enemyFlag = 2;
     current.x = 4;
@@ -687,29 +678,40 @@ void Game::auto_test() {
     command = { BOARD_MIDDLE_1 ,BOARD_MIDDLE_1 ,0 };
     place(current);
     while (1) {
-        clearScreen();
-        printBoard(current);
+        printBoard(current, time);
         fflush(stdout);
+
+        auto start = std::chrono::high_resolution_clock::now(); // 开始计时
         myFlag = 2;
         enemyFlag = 1;
         command = entrance(DEPTH, _INF, INF, myFlag, current, command);
         place(command);
-        clearScreen();
-        printBoard(command);
+        auto end = std::chrono::high_resolution_clock::now(); // 结束计时
+        std::chrono::duration<double> elapsed = end - start; // 计算用时
+        time = elapsed.count();
+        printBoard(command, time);
         fflush(stdout);
+
+        start = std::chrono::high_resolution_clock::now(); // 开始计时
         myFlag = 1;
         enemyFlag = 2;
         current = entrance(DEPTH, _INF, INF, myFlag, command, current);
         place(current);
+        end = std::chrono::high_resolution_clock::now(); // 结束计时
+        elapsed = end - start; // 计算用时
+        time = elapsed.count();
     }
 }
 // 测试函数
 void Game::test() {
     coordinate command;
     coordinate current; // 当前棋子位置
+    printf("Enter your flag (1 for black, 2 for white): ");
+    scanf("%d", &enemyFlag);
+    myFlag = 3 - enemyFlag;
     if (myFlag == 1) { // 如果我方是黑棋
-        current.x = BOARD_MIDDLE_1;
-        current.y = BOARD_MIDDLE_2;
+        current.x = 4;
+        current.y = 4;
         command = { BOARD_MIDDLE_1 ,BOARD_MIDDLE_1 ,0 };
     }
     else { // 如果我方是白棋
@@ -717,30 +719,33 @@ void Game::test() {
         current.y = BOARD_MIDDLE_1;
         command = { BOARD_MIDDLE_1 ,BOARD_MIDDLE_2 ,0 };
     }
-    printf("Enter your flag (1 for black, 2 for white): ");
-    scanf("%d", &enemyFlag);
-    myFlag = 3 - enemyFlag;
     printf("OK\n");
     fflush(stdout);
     if (myFlag == 1) {
-        current = entrance(DEPTH, _INF, INF, myFlag, command, current);
-        fflush(stdout);
         place(current);
     }
+    clearScreen();
+    printBoard(current, 0);
+    fflush(stdout);
     while (1) {
-        clearScreen();
-        printBoard(current);
-        fflush(stdout);
         scanf("%d %d", &command.x, &command.y);
         MAP.board[command.x][command.y] = enemyFlag;
+        auto start = std::chrono::high_resolution_clock::now(); // 开始计时
         current = entrance(DEPTH, _INF, INF, myFlag, command, current);
         place(current);
+        auto end = std::chrono::high_resolution_clock::now(); // 结束计时
+        std::chrono::duration<double> elapsed = end - start; // 计算用时
+        clearScreen();
+        printBoard(current, elapsed.count());
+        fflush(stdout);
     }
 }
+#endif
+
 // 主函数
 int main() {
-    if (1) game.auto_test();
-    if (1) game.test();
+    if (0) game.auto_test();
+    game.test();
     game.loop(); // 进入主循环
     return 0;
 }
