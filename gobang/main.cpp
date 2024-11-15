@@ -550,7 +550,7 @@ coordinate alphaBeta(int depth, int alpha, int beta, int player, coordinate comm
     } 
     coordinate steps[BOARD_SIZE * BOARD_SIZE];
     int length = inspireSearch(steps, player);//搜索可落子点
-    if (length > 5 && depth > 1)
+    if (length > 7 && depth > 1)
         depth--;
     if (length > 2)
         depth--;
@@ -680,7 +680,7 @@ void Game::auto_test() {
     while (1) {
         printBoard(current, time);
         fflush(stdout);
-
+        getchar();
         auto start = std::chrono::high_resolution_clock::now(); // 开始计时
         myFlag = 2;
         enemyFlag = 1;
@@ -744,8 +744,8 @@ void Game::test() {
 
 // 主函数
 int main() {
-    if (0) game.auto_test();
-    game.test();
+    //if (0) game.auto_test();
+    //game.test();
     game.loop(); // 进入主循环
     return 0;
 }
